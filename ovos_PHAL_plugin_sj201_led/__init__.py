@@ -100,7 +100,7 @@ class MycroftSJ201Validator:
         if exists(I2C_PLATFORM_FILE):
             with open(I2C_PLATFORM_FILE) as f:
                 platform = f.readline().strip().lower()
-            if platform == "SJ201LED":
+            if platform == "SJ201":
                 return True
         # Try a direct hardware check
         if is_mycroft_sj201():
