@@ -17,10 +17,12 @@
 import os
 import time
 from threading import Event
+from os.path import exists
 
 from ovos_bus_client.message import Message
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_utils.log import LOG
+from ovos_PHAL.detection import is_mycroft_sj201
 
 RED = (255, 0, 0)
 YELLOW = (255, 150, 0)
@@ -29,6 +31,8 @@ CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
 BLACK = (0, 0, 0)
+
+I2C_PLATFORM_FILE = "/etc/OpenVoiceOS/i2c_platform"
 
 
 class SJ201Interface:
@@ -87,11 +91,23 @@ class SJ201Interface:
 class MycroftSJ201Validator:
     @staticmethod
     def validate(config=None):
-        """ this method is called before loading the plugin.
-        If it returns False the plugin is not loaded.
-        This allows a plugin to run platform checks"""
-        # TODO detect sj201
-        return True
+        # If the user enabled the plugin no need to go further
+        if config.get("enabled"):
+            return True
+        # Check for a file created by ovos-i2csound
+        # https://github.com/OpenVoiceOS/ovos-i2csound/blob/a107b74d61bbb362421fb51da6b91f2ba49b6a1a/ovos-i2csound#L76
+        LOG.debug(f"checking file {I2C_PLATFORM_FILE}")
+        if exists(I2C_PLATFORM_FILE):
+            with open(I2C_PLATFORM_FILE) as f:
+                platform = f.readline().strip().lower()
+            if platform == "SJ201LED":
+                return True
+        # Try a direct hardware check
+        if is_mycroft_sj201():
+            LOG.debug("direct hardware check")
+            return True
+        LOG.debug("no validation")
+        return False
 
 
 class MycroftSJ201(PHALPlugin):
@@ -166,7 +182,8 @@ class MycroftSJ201(PHALPlugin):
         Returns:
            (list) list of (r,g,b) tuples for each eye pixel
         """
-        self.bus.emit(message.reply("enclosure.eyes.rgb", {"pixels": self.sj.current_rgb}))
+        self.bus.emit(message.reply("enclosure.eyes.rgb",
+                      {"pixels": self.sj.current_rgb}))
 
     # Audio Events
     def on_record_begin(self, message=None):
@@ -352,7 +369,8 @@ class MycroftSJ201(PHALPlugin):
         """Show a generic 'talking' animation for non-synched speech
         triggered by "enclosure.mouth.talk"
         """
-        self.sj.color_chase(self.default_color, 0.1)  # TODO dedicated animation
+        self.sj.color_chase(self.default_color,
+                            0.1)  # TODO dedicated animation
 
     def on_think(self, message=None):
         """Show a 'thinking' image or animation
