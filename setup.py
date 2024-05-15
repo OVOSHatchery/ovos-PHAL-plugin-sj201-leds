@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from setuptools import setup
 
-PLUGIN_ENTRY_POINT = 'ovos-PHAL-plugin-sj201-leds=ovos_PHAL_plugin_sj201_led:MycroftMark1'
+PLUGIN_ENTRY_POINT = 'ovos-PHAL-plugin-sj201-leds=ovos_PHAL_plugin_sj201_led:MycroftSJ201'
 setup(
     name='ovos-PHAL-plugin-sj201-leds',
     version='0.0.1a1',
