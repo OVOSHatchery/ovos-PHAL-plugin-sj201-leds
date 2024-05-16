@@ -95,12 +95,12 @@ class MycroftSJ201Validator:
         if config.get("enabled"):
             return True
         # Check for a file created by ovos-i2csound
-        # https://github.com/OpenVoiceOS/ovos-i2csound/blob/a107b74d61bbb362421fb51da6b91f2ba49b6a1a/ovos-i2csound#L76
+        # https://github.com/OpenVoiceOS/ovos-i2csound/blob/dev/ovos-i2csound#L76
         LOG.debug(f"checking file {I2C_PLATFORM_FILE}")
         if exists(I2C_PLATFORM_FILE):
             with open(I2C_PLATFORM_FILE) as f:
                 platform = f.readline().strip().lower()
-            if platform == "SJ201":
+            if platform == "SJ201V6":
                 return True
         # Try a direct hardware check
         if is_mycroft_sj201():
