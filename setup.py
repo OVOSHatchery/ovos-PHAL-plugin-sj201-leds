@@ -11,7 +11,7 @@ setup(
     author_email='jarbasai@mailfence.com',
     license='Apache-2.0',
     packages=['ovos_PHAL_plugin_sj201_led'],
-    install_requires=["ovos-plugin-manager>=0.0.24"],
+    install_requires=["ovos-plugin-manager>=0.0.24", "neopixel"],
     zip_safe=True,
     classifiers=[
         'Development Status :: 3 - Alpha',

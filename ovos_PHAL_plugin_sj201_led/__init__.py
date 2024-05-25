@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-import abc
-import os
+
 import time
 from threading import Event
 
@@ -22,6 +21,7 @@ from ovos_bus_client.message import Message
 from ovos_plugin_manager.phal import PHALPlugin
 from ovos_utils.log import LOG
 
+from ovos_PHAL_plugin_sj201_led.interface import SJ201Interface, SJ201DevKitInterface
 
 RED = (255, 0, 0)
 YELLOW = (255, 150, 0)
@@ -30,93 +30,6 @@ CYAN = (0, 255, 255)
 BLUE = (0, 0, 255)
 PURPLE = (180, 0, 255)
 BLACK = (0, 0, 0)
-
-
-
-class AbstractLedInterface:
-    @abc.abstractmethod
-    def setColor(self, pixel, colors):
-        pass
-
-    def wheel(self, pos):
-        # Input a value 0 to 255 to get a color value.
-        # The colours are a transition r - g - b - back to r.
-        if pos < 0 or pos > 255:
-            return (0, 0, 0)
-        if pos < 85:
-            return (255 - pos * 3, pos * 3, 0)
-        if pos < 170:
-            pos -= 85
-            return (0, 255 - pos * 3, pos * 3)
-        pos -= 170
-        return (pos * 3, 0, 255 - pos * 3)
-
-    def rainbow_cycle(self, wait=0):
-        for j in range(255):
-            for i in range(self.num_pixels):
-                rc_index = (i * 256 // self.num_pixels) + j
-                colors = self.wheel(rc_index & 255)
-                self.setColor(i, colors)
-                time.sleep(wait)
-
-    def color_chase(self, color, wait=0.2):
-        for i in range(self.num_pixels):
-            self.setColor(i, color)
-            time.sleep(wait)
-
-    def turn_off(self):
-        self.color_chase(BLACK, 0)
-
-
-class SJ201DevKitInterface(AbstractLedInterface):
-    DeviceAddr = 0x04
-    num_pixels = 12
-    current_rgb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    def setColor(self, pixel, colors):
-        assert pixel < 12
-        redVal = colors[0]
-        greenVal = colors[1]
-        blueVal = colors[2]
-
-        SJ201DevKitInterface.current_rgb[pixel] = (redVal, greenVal, blueVal)
-
-        commandOS = "i2cset -a -y 1  %d %d %d %d %d i " % (
-            self.DeviceAddr,
-            pixel,
-            redVal,
-            greenVal,
-            blueVal)
-
-        # print(commandOS)
-        os.system(commandOS)
-
-
-class SJ201Interface(AbstractLedInterface):
-    num_pixels = 12
-    current_rgb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    def __init__(self):
-        import neopixel
-        from adafruit_blinka.microcontroller.bcm283x.pin import D12
-        self.brightness = 0.6  # TODO config
-        self.pixels = neopixel.NeoPixel(
-            D12,
-            self.num_pixels,
-            brightness=self.brightness,
-            auto_write=False,
-            pixel_order=neopixel.GRB
-        )
-
-    def setColor(self, pixel, colors):
-        assert pixel < 12
-        red_val = colors[0]
-        green_val = colors[1]
-        blue_val = colors[2]
-
-        self.pixels[pixel] = (red_val, green_val, blue_val)
-        self.pixels.show()
-        SJ201Interface.current_rgb[pixel] = (red_val, green_val, blue_val)
 
 
 class MycroftSJ201Validator:
@@ -144,7 +57,7 @@ class MycroftSJ201(PHALPlugin):
         if self.config.get("dev_kit", True):
             self.sj = SJ201DevKitInterface()
         else:
-            self.sj = SJ201Interface()
+            self.sj = SJ201Interface(brightness=self.config.get("brightness", 0.6))
 
         self.speaking = False
         self.listening = False
