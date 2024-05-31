@@ -99,8 +99,9 @@ class MycroftSJ201Validator:
         LOG.debug(f"checking file {I2C_PLATFORM_FILE}")
         if exists(I2C_PLATFORM_FILE):
             with open(I2C_PLATFORM_FILE) as f:
-                platform = f.readline().strip().lower()
+                platform = f.readline().strip()
             if platform == "SJ201V6":
+                LOG.debug("i2csound file")
                 return True
         # Try a direct hardware check
         if is_mycroft_sj201():
